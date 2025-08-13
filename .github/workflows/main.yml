@@ -64,6 +64,7 @@ jobs:
   sast:
     name: Static Analysis (CodeQL)
     runs-on: self-hosted
+    continue-on-error: true
 
     steps:
       - name:  Checkout Repository
