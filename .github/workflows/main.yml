@@ -19,19 +19,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name:  Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name:  Install dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           # Install flake8 and pytest for testing and linting
           pip install flake8 pytest
 
-      - name:  Run Linter (Flake8)
+      - name: Run Linter (Flake8)
         run: flake8 . --count --select=E9,F63,F7,F82,W503 --show-source --statistics
 
       - name: Run Unit Tests (Pytest)
@@ -41,23 +41,23 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
-     # - name: 🛡️ Security Scan (SCA)
-       # uses: snyk/actions/python@master
-       ## env:
-         # SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        #with:
-        #  args: --all-projects --sarif-file-output=snyk.sarif
+      # - name: 🛡️ Security Scan (SCA)
+      #   uses: snyk/actions/python@master
+      #   env:
+      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      #   with:
+      #     args: --all-projects --sarif-file-output=snyk.sarif
 
-      - name:  Docker Login
+      - name: Docker Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name:  Build Docker Image
+      - name: Build Docker Image
         run: docker build -t ${{ env.DOCKER_IMAGE_NAME }}:v1 .
 
-      - name:  Push Docker Image
+      - name: Push Docker Image
         run: docker push ${{ env.DOCKER_IMAGE_NAME }}:v1
 
   # The 'sast' job runs static analysis in parallel with the main CI job.
@@ -67,7 +67,7 @@ jobs:
     continue-on-error: true
 
     steps:
-      - name:  Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
@@ -75,11 +75,11 @@ jobs:
         with:
           languages: python
 
-      - name:  Perform CodeQL Analysis
+      - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
   # The 'cd' job handles the deployment to Kubernetes after CI is successful.
-   cd:
+  cd:
     name: Continuous Deployment
     runs-on: self-hosted
     needs: [ci, sast] # Wait for both CI and SAST to complete
