@@ -28,7 +28,7 @@ html = """
 <!doctype html>
 <html>
 <head>
-    <title>Expense Tracker Hackathon Hi Minnu! </title>
+    <title>Expense Tracker Hackathon Hi Minnu!! </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="p-4">
