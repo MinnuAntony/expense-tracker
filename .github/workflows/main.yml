@@ -102,6 +102,8 @@ jobs:
           kubectl set image deployment/hack-expense-tracker-deployment \
             expense-tracker-container=${{ env.DOCKER_IMAGE_NAME }}:v1
 
+
+
       - name: Wait for deployment to be ready
         run: |
           # The service might take some time to be ready and get an external IP.
