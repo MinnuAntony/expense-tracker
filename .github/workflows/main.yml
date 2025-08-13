@@ -79,43 +79,35 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   # The 'cd' job handles the deployment to Kubernetes after CI is successful.
-  cd:
+   cd:
     name: Continuous Deployment
     runs-on: self-hosted
     needs: [ci, sast] # Wait for both CI and SAST to complete
-    
-    steps:
-      - name:  Checkout Repository
-        uses: actions/checkout@v4
-        
-    
-      - name:  Deploy to Kubernetes
-        run: |
-          # Apply manifests
-          kubectl apply -f pv.yaml
 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Applying Kubernetes manifests..."
+          kubectl apply -f pv.yaml
           kubectl apply -f pvc.yaml
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
 
-          # Update deployment image to latest CI build
+          echo "Updating deployment image..."
           kubectl set image deployment/hack-expense-tracker-deployment \
-            expense-tracker-container=${{ env.DOCKER_IMAGE_NAME }}:v1
+            expense-tracker=${{ env.DOCKER_IMAGE_NAME }}:v1
 
+          echo "Waiting for PVC to bind..."
+          kubectl wait --for=condition=Bound pvc/expense-db-pvc --timeout=60s
 
-
-      - name: Wait for deployment to be ready
-        run: |
-          # The service might take some time to be ready and get an external IP.
-          # This loop waits until the service is available.
-          DEPLOYMENT_NAME="hack-expense-tracker-deployment"
-          echo "Waiting for deployment ${DEPLOYMENT_NAME} to be ready..."
-          kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=5m
-      
-      - name:  Dynamic Application Security Testing (DAST)
-        run: |
-          # Placeholder for DAST. This step would typically run a DAST scanner
-          # like OWASP ZAP or a commercial tool against the deployed application's public URL.
-          echo "Placeholder for DAST. This step needs a DAST scanner and the deployed application's public URL."
-          echo "Example: `zap-scan -t http://<YOUR_APP_PUBLIC_IP> -f openapi.yaml -r`"
-          echo "This step would typically run after a successful deployment to an environment."
+          echo "Waiting for deployment to be ready..."
+          if ! kubectl rollout status deployment/hack-expense-tracker-deployment --timeout=5m; then
+            echo "Deployment failed! Showing pod details..."
+            kubectl get pods
+            kubectl describe pods
+            kubectl logs -l app=expense-tracker --all-containers=true --tail=50
+            exit 1
+          fi
