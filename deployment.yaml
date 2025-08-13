@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hack-expense-tracker-deployment   # Added "hack" here
+  name: hack-expense-tracker-deployment
   labels:
     app: expense-tracker
 spec:
@@ -15,14 +15,15 @@ spec:
         app: expense-tracker
     spec:
       containers:
-        - name: expense-tracker-container
+        - name: expense-tracker
           image: minnuantony/expense-tracker:v1
           ports:
             - containerPort: 5000
           volumeMounts:
-            - name: expense-db-volume
-              mountPath: /app/expenses.db
+            - mountPath: "/var/lib/mysql"
+              name: expense-db-storage
       volumes:
-        - name: expense-db-volume
+        - name: expense-db-storage
           persistentVolumeClaim:
             claimName: expense-db-pvc
+      
