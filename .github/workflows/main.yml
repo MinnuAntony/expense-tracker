@@ -80,7 +80,7 @@ jobs:
   # The 'cd' job handles the deployment to Kubernetes after CI is successful.
   cd:
     name: Continuous Deployment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [ci, sast] # Wait for both CI and SAST to complete
     
     steps:
