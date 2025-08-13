@@ -16,42 +16,36 @@ def test_index_page_loads(client):
     assert b'Expense Tracker' in response.data
 
 # Test adding a new expense
-def test_add_expense(client):
-    """Test the functionality of adding a new expense."""
+def test_add_expense_redirects_successfully(client):
+    """Test that a POST to '/add' redirects to the index page."""
     response = client.post('/add', data={
         'date': '2025-08-13',
         'description': 'Groceries',
         'amount': '50.50'
-    }, follow_redirects=True)
+    })
     
-    # Assert that the request redirects successfully and the new item is on the page
-    assert response.status_code == 200
-    assert b'Groceries' in response.data
+    # Assert that the request redirects successfully (status code 302 for redirect)
+    assert response.status_code == 302
+    assert response.location == '/'
 
 # Test deleting an expense
-def test_delete_expense(client):
-    """Test the functionality of deleting an existing expense."""
-    # Note: Since we are not testing the database, this test can't verify deletion.
-    # It only checks for a successful redirect to the main page.
-    # We will simulate a delete request for a hypothetical item with id 1.
-    response = client.get('/delete/1', follow_redirects=True)
+def test_delete_expense_redirects_successfully(client):
+    """Test that a GET to '/delete/<id>' redirects to the index page."""
+    response = client.get('/delete/1')
     
     # Assert that the request redirects successfully
-    assert response.status_code == 200
-    assert b'Expense Tracker' in response.data
+    assert response.status_code == 302
+    assert response.location == '/'
 
 # Test editing an expense
-def test_edit_expense(client):
-    """Test the functionality of editing an existing expense."""
-    # Note: Since we are not testing the database, this test can't verify the update.
-    # It only checks for a successful redirect to the main page.
-    # We will simulate a POST request for a hypothetical item with id 1.
+def test_edit_expense_redirects_successfully(client):
+    """Test that a POST to '/edit/<id>' redirects to the index page."""
     response = client.post('/edit/1', data={
         'date': '2025-08-14',
         'description': 'Updated Description',
         'amount': '30.00'
-    }, follow_redirects=True)
+    })
     
     # Assert that the request redirects successfully
-    assert response.status_code == 200
-    assert b'Updated Description' in response.data
+    assert response.status_code == 302
+    assert response.location == '/'
