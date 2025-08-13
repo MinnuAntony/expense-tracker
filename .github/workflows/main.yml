@@ -1,6 +1,6 @@
-
 name: Flask Expense Tracker CI/CD
 
+# The workflow will run on every push to the main branch.
 on:
   push:
     branches:
@@ -10,10 +10,11 @@ env:
   DOCKER_IMAGE_NAME: minnuantony/expense-tracker
 
 jobs:
+  # The 'ci' job handles building, testing, and pushing the Docker image.
   ci:
     name: Continuous Integration
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
@@ -24,7 +25,17 @@ jobs:
           python-version: '3.12'
 
       - name: 📦 Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Assuming flake8 and pytest are in your requirements.txt
+          pip install flake8 pytest
+
+      - name: 🧹 Run Linter (Flake8)
+        run: flake8 . --count --select=E9,F63,F7,F82,W503 --show-source --statistics
+
+      - name: ✅ Run Unit Tests (Pytest)
+        run: pytest
 
       - name: 🛡️ Security Scan (SCA)
         uses: snyk/actions/python@master
@@ -45,15 +56,36 @@ jobs:
       - name: ⬆️ Push Docker Image
         run: docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
 
+  # The 'sast' job runs static analysis in parallel with the main CI job.
+  sast:
+    name: Static Analysis (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔎 Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: 🏃 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # The 'cd' job handles the deployment to Kubernetes after CI is successful.
   cd:
     name: Continuous Deployment
     runs-on: ubuntu-latest
-    needs: ci
+    needs: [ci, sast] # Wait for both CI and SAST to complete
     
     steps:
       - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
-      
+        
       - name: 🔑 Set up Kubeconfig
         run: |
           mkdir -p ~/.kube
@@ -71,7 +103,18 @@ jobs:
           kubectl set image deployment/hack-expense-tracker-deployment \
             expense-tracker-container=${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
 
+      - name: ⏱️ Wait for deployment to be ready
+        run: |
+          # The service might take some time to be ready and get an external IP.
+          # This loop waits until the service is available.
+          DEPLOYMENT_NAME="hack-expense-tracker-deployment"
+          echo "Waiting for deployment ${DEPLOYMENT_NAME} to be ready..."
+          kubectl rollout status deployment/${DEPLOYMENT_NAME} --timeout=5m
+      
       - name: 🔍 Dynamic Application Security Testing (DAST)
         run: |
-          echo "Placeholder for DAST. You can use tools like OWASP ZAP or a commercial scanner here."
-          echo "This step would typically run against the deployed application's public URL."
+          # Placeholder for DAST. This step would typically run a DAST scanner
+          # like OWASP ZAP or a commercial tool against the deployed application's public URL.
+          echo "Placeholder for DAST. This step needs a DAST scanner and the deployed application's public URL."
+          echo "Example: `zap-scan -t http://<YOUR_APP_PUBLIC_IP> -f openapi.yaml -r`"
+          echo "This step would typically run after a successful deployment to an environment."
