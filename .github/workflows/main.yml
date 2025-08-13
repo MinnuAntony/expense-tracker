@@ -101,7 +101,7 @@ jobs:
             expense-tracker=${{ env.DOCKER_IMAGE_NAME }}:v1
 
           echo "Waiting for PVC to bind..."
-          kubectl wait --for=condition=Bound pvc/expense-db-pvc --timeout=60s
+          kubectl wait --for=condition=Bound pvc/expense-db-pvc --timeout=180s
 
           echo "Waiting for deployment to be ready..."
           if ! kubectl rollout status deployment/hack-expense-tracker-deployment --timeout=5m; then
