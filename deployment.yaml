@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: expense-tracker-container
-          image: minnuantony/expense-tracker:${{ github.sha }}
+          image: minnuantony/expense-tracker:v1
           ports:
             - containerPort: 5000
           volumeMounts:
