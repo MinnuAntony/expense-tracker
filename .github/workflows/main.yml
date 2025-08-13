@@ -1,1 +1,77 @@
 
+name: Flask Expense Tracker CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOCKER_IMAGE_NAME: minnuantony/expense-tracker
+
+jobs:
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🛡️ Security Scan (SCA)
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --sarif-file-output=snyk.sarif
+
+      - name: 🐳 Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 🛠️ Build Docker Image
+        run: docker build -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
+
+      - name: ⬆️ Push Docker Image
+        run: docker push ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+
+  cd:
+    name: Continuous Deployment
+    runs-on: ubuntu-latest
+    needs: ci
+    
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🔑 Set up Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: 🚀 Deploy to Kubernetes
+        run: |
+          # Apply manifests
+          kubectl apply -f pvc.yaml
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+
+          # Update deployment image to latest CI build
+          kubectl set image deployment/hack-expense-tracker-deployment \
+            expense-tracker-container=${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+
+      - name: 🔍 Dynamic Application Security Testing (DAST)
+        run: |
+          echo "Placeholder for DAST. You can use tools like OWASP ZAP or a commercial scanner here."
+          echo "This step would typically run against the deployed application's public URL."
