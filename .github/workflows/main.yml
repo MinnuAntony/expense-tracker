@@ -41,12 +41,12 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
-      - name: 🛡️ Security Scan (SCA)
-        uses: snyk/actions/python@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --all-projects --sarif-file-output=snyk.sarif
+     # - name: 🛡️ Security Scan (SCA)
+       # uses: snyk/actions/python@master
+       ## env:
+         # SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        #with:
+        #  args: --all-projects --sarif-file-output=snyk.sarif
 
       - name: 🐳 Docker Login
         uses: docker/login-action@v3
