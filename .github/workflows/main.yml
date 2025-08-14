@@ -41,7 +41,7 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
-      # - name: 🛡️ Security Scan (SCA)
+      # - name: 🛡 Security Scan (SCA)
       #   uses: snyk/actions/python@master
       #   env:
       #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -118,7 +118,7 @@ jobs:
           echo "Waiting for pods to be ready..."
           kubectl wait --for=condition=Ready pod -l app=expense-tracker --timeout=2m
 
-      - name: 🔍 Dynamic Application Security Testing (DAST)
+      - name:  Dynamic Application Security Testing (DAST)
         run: |
           # Placeholder for DAST. This step would typically run a DAST scanner
           # like OWASP ZAP or a commercial tool against the deployed application's public URL.
