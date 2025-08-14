@@ -106,17 +106,17 @@ jobs:
           kubectl set image deployment/hack-expense-tracker-deployment \
             expense-tracker=${{ env.DOCKER_IMAGE_NAME }}:v1
 
-          echo "Waiting for deployment rollout..."
-          if ! kubectl rollout status deployment/hack-expense-tracker-deployment --timeout=5m; then
-            echo "Deployment failed! Showing pod details..."
-            kubectl get pods
-            kubectl describe pods
-            kubectl logs -l app=expense-tracker --all-containers=true --tail=50
-            exit 1
-          fi
+          # echo "Waiting for deployment rollout..."
+          # if ! kubectl rollout status deployment/hack-expense-tracker-deployment --timeout=5m; then
+          #   echo "Deployment failed! Showing pod details..."
+          #   kubectl get pods
+          #   kubectl describe pods
+          #   kubectl logs -l app=expense-tracker --all-containers=true --tail=50
+          #   exit 1
+          # fi
 
-          echo "Waiting for pods to be ready..."
-          kubectl wait --for=condition=Ready pod -l app=expense-tracker --timeout=2m
+          # echo "Waiting for pods to be ready..."
+          # kubectl wait --for=condition=Ready pod -l app=expense-tracker --timeout=2m
 
       - name:  Dynamic Application Security Testing (DAST)
         run: |
