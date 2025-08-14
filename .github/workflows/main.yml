@@ -41,12 +41,34 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:.
           pytest
 
-      # - name: 🛡 Security Scan (SCA)
-      #   uses: snyk/actions/python@master
-      #   env:
-      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      #   with:
-      #     args: --all-projects --sarif-file-output=snyk.sarif
+      - name: 🛡 Security Scan (SCA)
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --sarif-file-output=snyk.sarif
+  sast:
+    name: Static Analysis (CodeQL)
+    runs-on: self-hosted
+    continue-on-error: true
+
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
 
       - name: Docker Login
         uses: docker/login-action@v3
@@ -61,22 +83,22 @@ jobs:
         run: docker push ${{ env.DOCKER_IMAGE_NAME }}:v1
 
   # The 'sast' job runs static analysis in parallel with the main CI job.
-  sast:
-    name: Static Analysis (CodeQL)
-    runs-on: self-hosted
-    continue-on-error: true
+  # sast:
+  #   name: Static Analysis (CodeQL)
+  #   runs-on: self-hosted
+  #   continue-on-error: true
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
+  #     - name: Initialize CodeQL
+  #       uses: github/codeql-action/init@v3
+  #       with:
+  #         languages: python
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+  #     - name: Perform CodeQL Analysis
+  #       uses: github/codeql-action/analyze@v3
 
   # The 'cd' job handles the deployment to Kubernetes after CI is successful.
   cd:
