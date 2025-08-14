@@ -96,14 +96,17 @@ jobs:
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
 
+          PVC_STATUS=$(kubectl get pvc expense-db-pvc -o jsonpath='{.status.phase}')
+          if [ "$PVC_STATUS" != "Bound" ]; then
+            echo "Waiting for PVC to bind..."
+            kubectl wait --for=condition=Bound pvc/expense-db-pvc --timeout=180s
+          fi
+
           echo "Updating deployment image..."
           kubectl set image deployment/hack-expense-tracker-deployment \
             expense-tracker=${{ env.DOCKER_IMAGE_NAME }}:v1
 
-          echo "Waiting for PVC to bind..."
-          kubectl wait --for=condition=Bound pvc/expense-db-pvc --timeout=180s
-
-          echo "Waiting for deployment to be ready..."
+          echo "Waiting for deployment rollout..."
           if ! kubectl rollout status deployment/hack-expense-tracker-deployment --timeout=5m; then
             echo "Deployment failed! Showing pod details..."
             kubectl get pods
@@ -111,6 +114,10 @@ jobs:
             kubectl logs -l app=expense-tracker --all-containers=true --tail=50
             exit 1
           fi
+
+          echo "Waiting for pods to be ready..."
+          kubectl wait --for=condition=Ready pod -l app=expense-tracker --timeout=2m
+
       - name: 🔍 Dynamic Application Security Testing (DAST)
         run: |
           # Placeholder for DAST. This step would typically run a DAST scanner
@@ -118,4 +125,3 @@ jobs:
           echo "Placeholder for DAST. This step needs a DAST scanner and the deployed application's public URL."
           echo "Example: `zap-scan -t http://<YOUR_APP_PUBLIC_IP> -f openapi.yaml -r`"
           echo "This step would typically run after a successful deployment to an environment."
-
